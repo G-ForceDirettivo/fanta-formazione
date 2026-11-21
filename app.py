@@ -24,13 +24,18 @@ NOMI_RUOLO = {"P": "Portiere", "D": "Difensore", "C": "Centrocampista", "A": "At
 # ------------------------------------------------------------------ stile
 st.markdown("""
 <style>
-#MainMenu, footer, header [data-testid="stToolbar"] {visibility:hidden}
-.block-container {padding-top:1.2rem; padding-bottom:3rem; max-width:760px}
-.ff-head {display:flex; align-items:center; gap:12px; margin-bottom:4px}
+#MainMenu, footer {visibility:hidden}
+header[data-testid="stHeader"], [data-testid="stHeader"] {display:none !important}
+.block-container, [data-testid="stMainBlockContainer"] {padding-top:3rem !important; padding-bottom:3rem; max-width:760px}
+button[kind="primary"], [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"],
+button[kind="primaryFormSubmit"] {background:#2f6fe4 !important; border-color:#2f6fe4 !important; color:#fff !important}
+.stTabs [aria-selected="true"] p {color:#2f6fe4 !important}
+.stTabs [data-baseweb="tab-highlight"] {background-color:#2f6fe4 !important}
+.ff-head {display:flex; align-items:center; gap:12px; margin:8px 0 4px; padding-top:6px}
 .ff-logo {width:44px; height:44px; border-radius:12px; flex:none;
   background:linear-gradient(145deg,#3a7bff,#1b3fa8); display:flex; align-items:center;
   justify-content:center; font-size:24px}
-.ff-head h1 {font-size:24px; margin:0; padding:0}
+.ff-title {font-size:24px; font-weight:800; line-height:1.2}
 .ff-sub {color:#64708a; font-size:13px}
 .ff-badge {display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px;
   border-radius:7px; color:#fff; font-size:12px; font-weight:800; flex:none}
@@ -186,7 +191,7 @@ def intestazione(g):
     sub = ""
     if g.get("giornata"):
         sub = f"{g['giornata']}ª giornata · schierare entro {g.get('scadenza', '')}"
-    st.markdown(f'<div class="ff-head"><div class="ff-logo">⚽</div><div><h1>Fanta Formazione</h1>'
+    st.markdown(f'<div class="ff-head"><div class="ff-logo">⚽</div><div><div class="ff-title">Fanta Formazione</div>'
                 f'<div class="ff-sub">{esc(sub)}</div></div></div>', unsafe_allow_html=True)
 
 
