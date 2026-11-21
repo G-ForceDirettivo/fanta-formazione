@@ -3,7 +3,9 @@
 App Streamlit con account personali (Supabase Auth). Ogni utente ha le sue leghe e
 le sue rose; le notizie della giornata (probabili, infortuni, statistiche) sono comuni.
 """
+import base64
 import html
+import os
 import time
 from datetime import datetime, timezone
 
@@ -12,7 +14,9 @@ from supabase import create_client
 
 from motore import Motore, arricchisci, chiave, ROLE_ORDER
 
-st.set_page_config(page_title="Fanta Formazione", page_icon="⚽", layout="centered",
+_QUI = os.path.dirname(os.path.abspath(__file__))
+LOGO = os.path.join(_QUI, "logo.png")
+st.set_page_config(page_title="Fanta Formazione", page_icon=LOGO if os.path.exists(LOGO) else "⚽", layout="centered",
                    initial_sidebar_state="collapsed")
 
 SQUADRE_DEFAULT = ["Atalanta", "Bologna", "Cagliari", "Como", "Fiorentina", "Frosinone", "Genoa",
@@ -26,16 +30,18 @@ st.markdown("""
 <style>
 #MainMenu, footer {visibility:hidden}
 header[data-testid="stHeader"], [data-testid="stHeader"] {display:none !important}
-.block-container, [data-testid="stMainBlockContainer"] {padding-top:2.2rem !important; padding-bottom:3rem; max-width:760px}
+.block-container, [data-testid="stMainBlockContainer"] {padding-top:3rem !important; padding-bottom:3rem; max-width:760px}
 button[kind="primary"], [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"],
 button[kind="primaryFormSubmit"] {background:#2f6fe4 !important; border-color:#2f6fe4 !important; color:#fff !important}
 .stTabs [aria-selected="true"] p {color:#2f6fe4 !important}
 .stTabs [data-baseweb="tab-highlight"] {background-color:#2f6fe4 !important}
-.ff-head {display:flex; align-items:center; gap:12px; margin-bottom:4px}
-.ff-logo {width:44px; height:44px; border-radius:12px; flex:none;
-  background:linear-gradient(145deg,#3a7bff,#1b3fa8); display:flex; align-items:center;
-  justify-content:center; font-size:24px}
-.ff-head h1 {font-size:24px; margin:0; padding:0}
+.ff-head {display:flex; align-items:center; gap:12px; margin:8px 0 4px; padding-top:6px}
+.ff-logo {width:56px; height:56px; flex:none; display:flex; align-items:center; justify-content:center; font-size:30px}
+.ff-logo img {width:56px; height:56px; object-fit:contain}
+.ff-stemma {display:flex; align-items:center; gap:10px; margin:6px 0}
+.ff-stemma img {width:64px; height:64px; object-fit:contain}
+.ff-stemma b {font-size:18px}
+.ff-title {font-size:24px; font-weight:800; line-height:1.2}
 .ff-sub {color:#64708a; font-size:13px}
 .ff-badge {display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px;
   border-radius:7px; color:#fff; font-size:12px; font-weight:800; flex:none}
@@ -187,11 +193,33 @@ def riga(pl, g, motore, numero=None):
             f'<span class="ff-pct {cls_p(pl["p"])}">{round(pl["p"])}%</span></div>')
 
 
+def _logo_b64():
+    if "logo_b64" not in st.session_state:
+        try:
+            with open(LOGO, "rb") as f:
+                st.session_state.logo_b64 = base64.b64encode(f.read()).decode()
+        except OSError:
+            st.session_state.logo_b64 = ""
+    return st.session_state.logo_b64
+
+
+def logo_html():
+    b = _logo_b64()
+    return f'<img src="data:image/png;base64,{b}" alt="">' if b else "⚽"
+
+
+def stemma_squadra(lega):
+    """Lo stemma dei Desperados accanto al nome della squadra."""
+    if "desperados" in lega.get("squadra", "").lower() and _logo_b64():
+        st.markdown(f'<div class="ff-stemma">{logo_html()}<div><b>{esc(lega["squadra"])}</b>'
+                    f'<div class="ff-sub">{esc(lega["nome"])}</div></div></div>', unsafe_allow_html=True)
+
+
 def intestazione(g):
     sub = ""
     if g.get("giornata"):
         sub = f"{g['giornata']}ª giornata · schierare entro {g.get('scadenza', '')}"
-    st.markdown(f'<div class="ff-head"><div class="ff-logo">⚽</div><div><h1>Fanta Formazione</h1>'
+    st.markdown(f'<div class="ff-head"><div class="ff-logo">{logo_html()}</div><div><div class="ff-title">Fanta Formazione</div>'
                 f'<div class="ff-sub">{esc(sub)}</div></div></div>', unsafe_allow_html=True)
 
 
@@ -251,6 +279,7 @@ def scheda_formazione(stato, g):
     idx = nomi.index(scelta)
     st.session_state.lega_idx = idx
     lega = leghe[idx]
+    stemma_squadra(lega)
 
     ov = stato.get("override", {})
     ov_p = ov.get("p", {}) if ov.get("giornata") == g.get("giornata") else {}
